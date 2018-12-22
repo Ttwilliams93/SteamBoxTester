@@ -1,0 +1,47 @@
+//12.21.2018
+//Troy Williams
+//Steam Box Code Automation Project
+
+//Include Necessary Libraries
+#include <Controllino.h>
+
+//Initialize Necessary Pins
+//Inputs
+int InductiveSensor=CONTROLLINO_AI0;
+int AutomaticFunction=CONTROLLINO_AI1;
+int ManualFunction=CONTROLLINO_AI2;
+int ResetSwitch=CONTROLLINO_IN0;
+//Outputs
+int S1SteamTube=CONTROLLINO_DO2;
+int S2AirWipe=CONTROLLINO_DO1;
+int S3Clamp=CONTROLLINO_DO0;
+int TA340Power=CONTROLLINO_R9;
+
+//Fan Connects to 24v and 0v terminal blocks, always on
+
+//The swith in the back of unit will be power.  The switch on the front of the unit is for selection of the
+//modes.  The button on the front of the unit will serve as the reset button.
+
+/* The steambox has two major operation modes.  The first mode is automatic.  The wire will be inserted
+ *  and then the clamp will activate after a specified delay.  The steam tube will also move forwards to bring
+ *  the wire into the steam zone.  The clamp will remain locked until the CO2 laser indicates it is 
+ *  complete.  At this point the air wipe will turn on and the clamp will release so the user can remove the   
+ *  piece of wire. During this time the release button will remain active and the user will be able to 
+ *  press release at anytime to release the lock.  This button will restart
+ *  the system and clear all variables.
+ *  
+ *  The other mode will be manual.  The user will stick the wire into the opening and the machine will clamp.
+ *  The machine will remain clamped until the user presses the reset button, this will release the clamp and 
+ *  move the steam back into its home position.  It will also return the unit to the state where it is ready 
+ *  to grab the piece again.   This mode will ignore the CO2 laser results.
+ *  Air wipe will turn off after about 2-3 seconds in both situations.  
+ */
+void setup() {
+  // put your setup code here, to run once:
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
