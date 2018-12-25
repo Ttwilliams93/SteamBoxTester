@@ -17,7 +17,9 @@ int S2AirWipe=CONTROLLINO_DO1;
 int S3Clamp=CONTROLLINO_DO0;
 int TA340Power=CONTROLLINO_R9;
 
-//Fan Connects to 24v and 0v terminal blocks, always on
+//Varibles
+int TA340Status;
+//Fan Connects to 24v and 0v terminal blocks, always on  NO GOOD, NEED PWM OR 12V OUTPUT
 
 //The swith in the back of unit will be power.  The switch on the front of the unit is for selection of the
 //modes.  The button on the front of the unit will serve as the reset button.
@@ -37,11 +39,33 @@ int TA340Power=CONTROLLINO_R9;
  *  Air wipe will turn off after about 2-3 seconds in both situations.  
  */
 void setup() {
-  // put your setup code here, to run once:
+digitalWrite(TA340Power, HIGH); //Turn on the power to keyence sensor through a relay
+//Release all air solenoids
+digitalWrite(S1SteamTube, LOW);
+digitalWrite(S2AirWipe, LOW);
+digitalWrite(S3Clamp, LOW);  
+//Initialize Pins 
+pinMode(S1SteamTube, OUTPUT);
+pinMode(S2AirWipe, OUTPUT);
+pinMode(S3Clamp, OUTPUT);
+pinMode(TA340Power, OUTPUT);
+pinMode(InductiveSensor, INPUT);
+pinMode(AutomaticFunction,INPUT);
+pinMode(ManualFunction,INPUT);
+pinMode(ResetSwitch, INPUT);
+attachInterrupt(digitalPinToInterrupt(ResetSwitch), ResetFunction, HIGH);
+
+
+
+
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
+}
+
+ResetFunction(){ //Declare any varibles here as violatile
+}
 }
