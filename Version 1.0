@@ -1,5 +1,6 @@
 //12.21.2018
 //Troy Williams
+
 //Steam Box Code Automation Project
 
 //Include Necessary Libraries
@@ -19,6 +20,11 @@ int TA340Power=CONTROLLINO_R9;
 
 //Varibles
 int TA340Status;
+int AutomaticStatus;
+int ManualStatus;
+int ISStatus;
+int ResetSwitchStatus;
+int AirWipeActivationLength=3000; //millis
 //Fan Connects to 24v and 0v terminal blocks, always on  NO GOOD, NEED PWM OR 12V OUTPUT
 
 //The swith in the back of unit will be power.  The switch on the front of the unit is for selection of the
@@ -53,19 +59,41 @@ pinMode(InductiveSensor, INPUT);
 pinMode(AutomaticFunction,INPUT);
 pinMode(ManualFunction,INPUT);
 pinMode(ResetSwitch, INPUT);
-attachInterrupt(digitalPinToInterrupt(ResetSwitch), ResetFunction, HIGH);
-
-
-
-
-
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+//Determine Switch Function States
+ManualStatus=digitalRead(ManualFunction);
+AutomaticStatus=digitalRead(AutomaticFunction);
+ResetSwitchStatus=digitalRead(ResetSwitch); 
 
+
+if(ManualStatus==HIGH){
+  ISStatus=digitalRead(InductiveSensor);
+  if(ISStatus==HIGH){
+    digitalWrite(S3Clamp,HIGH);
+    digitalWrite(S1SteamTube,HIGH);
+    while(ResetSwitchStatus==LOW){
+      
+      ResetSwitchStatus=digitalRead(ResetSwitch); //Need to debounce this switch
+    }
+    digitalWrite(S3Clamp,LOW);
+    digitalWrite(S1SteamTube,LOW);
+    digitalWrite(S2AirWipe,HIGH);
+    unsigned long PreviousMillis=millis();
+    while((unsigned long)(millis()-PreviousMillis)< AirWipeActivationLength){ 
+      //Activate the airwipe for set delaytime 
+      }
+    digitalWrite(S2AirWipe,LOW);
+    while(ISStatus==HIGH){       //Stop from returning to loop until inductive sensor clears.
+      ISStatus=digitalRead(InductiveSensor);
+    }
+  }
 }
 
-ResetFunction(){ //Declare any varibles here as violatile
+if(AutomaticStatus==HIGH){
+  
 }
+
+
 }
