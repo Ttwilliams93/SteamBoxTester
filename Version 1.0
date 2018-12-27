@@ -1,6 +1,5 @@
 //12.21.2018
 //Troy Williams
-
 //Steam Box Code Automation Project
 
 //Include Necessary Libraries
@@ -8,15 +7,15 @@
 
 //Initialize Necessary Pins
 //Inputs
-int InductiveSensor=CONTROLLINO_AI0;
-int AutomaticFunction=CONTROLLINO_AI1;
-int ManualFunction=CONTROLLINO_AI2;
-int ResetSwitch=CONTROLLINO_IN0;
+int InductiveSensor = CONTROLLINO_AI0;
+int AutomaticFunction = CONTROLLINO_AI1;
+int ManualFunction = CONTROLLINO_AI2;
+int ResetSwitch = CONTROLLINO_IN0;
 //Outputs
-int S1SteamTube=CONTROLLINO_DO2;
-int S2AirWipe=CONTROLLINO_DO1;
-int S3Clamp=CONTROLLINO_DO0;
-int TA340Power=CONTROLLINO_R9;
+int S1SteamTube = CONTROLLINO_DO2;
+int S2AirWipe = CONTROLLINO_DO1;
+int S3Clamp = CONTROLLINO_DO0;
+int TA340Power = CONTROLLINO_R9;
 
 //Varibles
 int TA340Status;
@@ -24,76 +23,96 @@ int AutomaticStatus;
 int ManualStatus;
 int ISStatus;
 int ResetSwitchStatus;
-int AirWipeActivationLength=3000; //millis
+int AirWipeActivationLength = 3000; //millis
+int ClampDelay = 750; //millis
 //Fan Connects to 24v and 0v terminal blocks, always on  NO GOOD, NEED PWM OR 12V OUTPUT
 
 //The swith in the back of unit will be power.  The switch on the front of the unit is for selection of the
 //modes.  The button on the front of the unit will serve as the reset button.
 
 /* The steambox has two major operation modes.  The first mode is automatic.  The wire will be inserted
- *  and then the clamp will activate after a specified delay.  The steam tube will also move forwards to bring
- *  the wire into the steam zone.  The clamp will remain locked until the CO2 laser indicates it is 
- *  complete.  At this point the air wipe will turn on and the clamp will release so the user can remove the   
- *  piece of wire. During this time the release button will remain active and the user will be able to 
- *  press release at anytime to release the lock.  This button will restart
- *  the system and clear all variables.
- *  
- *  The other mode will be manual.  The user will stick the wire into the opening and the machine will clamp.
- *  The machine will remain clamped until the user presses the reset button, this will release the clamp and 
- *  move the steam back into its home position.  It will also return the unit to the state where it is ready 
- *  to grab the piece again.   This mode will ignore the CO2 laser results.
- *  Air wipe will turn off after about 2-3 seconds in both situations.  
- */
+    and then the clamp will activate after a specified delay.  The steam tube will also move forwards to bring
+    the wire into the steam zone.  The clamp will remain locked until the CO2 laser indicates it is
+    complete.  At this point the air wipe will turn on and the clamp will release so the user can remove the
+    piece of wire. During this time the release button will remain active and the user will be able to
+    press release at anytime to release the lock.  This button will restart
+    the system and clear all variables.
+
+    The other mode will be manual.  The user will stick the wire into the opening and the machine will clamp.
+    The machine will remain clamped until the user presses the reset button, this will release the clamp and
+    move the steam back into its home position.  It will also return the unit to the state where it is ready
+    to grab the piece again.   This mode will ignore the CO2 laser results.
+    Air wipe will turn off after about 2-3 seconds in both situations.
+*/
 void setup() {
-digitalWrite(TA340Power, HIGH); //Turn on the power to keyence sensor through a relay
-//Release all air solenoids
-digitalWrite(S1SteamTube, LOW);
-digitalWrite(S2AirWipe, LOW);
-digitalWrite(S3Clamp, LOW);  
-//Initialize Pins 
-pinMode(S1SteamTube, OUTPUT);
-pinMode(S2AirWipe, OUTPUT);
-pinMode(S3Clamp, OUTPUT);
-pinMode(TA340Power, OUTPUT);
-pinMode(InductiveSensor, INPUT);
-pinMode(AutomaticFunction,INPUT);
-pinMode(ManualFunction,INPUT);
-pinMode(ResetSwitch, INPUT);
+  digitalWrite(TA340Power, HIGH); //Turn on the power to keyence sensor through a relay
+  //Release all air solenoids
+  digitalWrite(S1SteamTube, LOW);
+  digitalWrite(S2AirWipe, LOW);
+  digitalWrite(S3Clamp, LOW);
+  //Initialize Pins
+  pinMode(S1SteamTube, OUTPUT);
+  pinMode(S2AirWipe, OUTPUT);
+  pinMode(S3Clamp, OUTPUT);
+  pinMode(TA340Power, OUTPUT);
+  pinMode(InductiveSensor, INPUT);
+  pinMode(AutomaticFunction, INPUT);
+  pinMode(ManualFunction, INPUT);
+  pinMode(ResetSwitch, INPUT);
+
+  Serial.begin(9600);
 }
 
 void loop() {
-//Determine Switch Function States
-ManualStatus=digitalRead(ManualFunction);
-AutomaticStatus=digitalRead(AutomaticFunction);
-ResetSwitchStatus=digitalRead(ResetSwitch); 
+  //Determine Switch Function States
+  ManualStatus = digitalRead(ManualFunction);
+  AutomaticStatus = digitalRead(AutomaticFunction);
+  ResetSwitchStatus = digitalRead(ResetSwitch);
 
-
-if(ManualStatus==HIGH){
-  ISStatus=digitalRead(InductiveSensor);
-  if(ISStatus==HIGH){
-    digitalWrite(S3Clamp,HIGH);
-    digitalWrite(S1SteamTube,HIGH);
-    while(ResetSwitchStatus==LOW){
-      
-      ResetSwitchStatus=digitalRead(ResetSwitch); //Need to debounce this switch
-    }
-    digitalWrite(S3Clamp,LOW);
-    digitalWrite(S1SteamTube,LOW);
-    digitalWrite(S2AirWipe,HIGH);
-    unsigned long PreviousMillis=millis();
-    while((unsigned long)(millis()-PreviousMillis)< AirWipeActivationLength){ 
-      //Activate the airwipe for set delaytime 
+  if (ManualStatus == HIGH) {
+    ISStatus = digitalRead(InductiveSensor);
+    if (ISStatus == HIGH) {
+      Delay(ClampDelay);
+      digitalWrite(S3Clamp, HIGH);
+      digitalWrite(S1SteamTube, HIGH);
+      while (ResetSwitchStatus == LOW) {
+        ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch,DO YOU THO? ITS IN A WHILE LOOP
       }
-    digitalWrite(S2AirWipe,LOW);
-    while(ISStatus==HIGH){       //Stop from returning to loop until inductive sensor clears.
-      ISStatus=digitalRead(InductiveSensor);
+      ReleaseAndAirWipe();
+      Delay(AirWipeActivationLength);
+      digitalWrite(S2AirWipe, LOW);
+      while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears. - Doesn't seem necessary, just good practice. 
+        ISStatus = digitalRead(InductiveSensor);
+      }
+    }
+  }
+  
+  if (AutomaticStatus == HIGH) {  //FUNCTIONS OFF A TIME DELAY OR CO2 SENSOR SIGNAL 
+    if (ISStatus == HIGH) {
+      Delay(ClampDelay); 
+      digitalWrite(S3Clamp, HIGH);
+      digitalWrite(S1SteamTube, HIGH);
+      while (ResetSwitchStatus == LOW) {
+        ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch, DO YOU THO? ITS IN A WHILE LOOP
+      }
+      ReleaseAndAirWipe();
+      Delay(AirWipeActivationLength);
+      digitalWrite(S2AirWipe, LOW);
+      while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears.
+        ISStatus = digitalRead(InductiveSensor);
+      }
     }
   }
 }
 
-if(AutomaticStatus==HIGH){
-  
+void ReleaseAndAirWipe(){
+    digitalWrite(S3Clamp, LOW);
+    digitalWrite(S1SteamTube, LOW);
+    digitalWrite(S2AirWipe, HIGH);
 }
-
-
+void Delay(unsigned long DelayTime){
+      unsigned long PreviousMillis=millis();
+      while ((unsigned long)(millis() - PreviousMillis) < DelayTime) {
+        //Delay For passed through time
+      }
 }
