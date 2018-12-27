@@ -17,6 +17,7 @@ int S1SteamTube = CONTROLLINO_DO2;
 int S2AirWipe = CONTROLLINO_DO1;
 int S3Clamp = CONTROLLINO_DO0;
 int TA340Power = CONTROLLINO_R9;
+//int FanPower = CONTROLLINO_DO3;
 
 //Varibles
 int TA340Status;
@@ -27,6 +28,7 @@ int ResetSwitchStatus;
 int CO2SensorStatus;
 int AirWipeActivationLength = 3000; //millis
 int ClampDelay = 750; //millis
+//int FanPowerLevel=150; //0-255, do not put above 200
 int AutomaticDelayLength = 10000;
 unsigned long PreviousMillis;
 //Fan Connects to 24v and 0v terminal blocks, always on  NO GOOD, NEED PWM OR 12V OUTPUT
@@ -59,11 +61,12 @@ void setup() {
   pinMode(S2AirWipe, OUTPUT);
   pinMode(S3Clamp, OUTPUT);
   pinMode(TA340Power, OUTPUT);
+//  pinMode(FanPower, OUTPUT);
   pinMode(InductiveSensor, INPUT);
   pinMode(AutomaticFunction, INPUT);
   pinMode(ManualFunction, INPUT);
   pinMode(ResetSwitch, INPUT);
-
+//  analogWrite(FanPower, FanPowerLevel);
   Serial.begin(9600);
 }
 
