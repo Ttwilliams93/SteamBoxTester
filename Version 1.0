@@ -11,6 +11,7 @@ int InductiveSensor = CONTROLLINO_AI0;
 int AutomaticFunction = CONTROLLINO_AI1;
 int ManualFunction = CONTROLLINO_AI2;
 int ResetSwitch = CONTROLLINO_IN0;
+int CO2Sensor = CONTROLLINO_AI3;
 //Outputs
 int S1SteamTube = CONTROLLINO_DO2;
 int S2AirWipe = CONTROLLINO_DO1;
@@ -23,8 +24,11 @@ int AutomaticStatus;
 int ManualStatus;
 int ISStatus;
 int ResetSwitchStatus;
+int CO2SensorStatus;
 int AirWipeActivationLength = 3000; //millis
 int ClampDelay = 750; //millis
+int AutomaticDelayLength = 10000;
+unsigned long PreviousMillis;
 //Fan Connects to 24v and 0v terminal blocks, always on  NO GOOD, NEED PWM OR 12V OUTPUT
 
 //The swith in the back of unit will be power.  The switch on the front of the unit is for selection of the
@@ -68,32 +72,34 @@ void loop() {
   ManualStatus = digitalRead(ManualFunction);
   AutomaticStatus = digitalRead(AutomaticFunction);
   ResetSwitchStatus = digitalRead(ResetSwitch);
+  CO2SensorStatus = digitalRead(CO2Sensor);
 
   if (ManualStatus == HIGH) {
     ISStatus = digitalRead(InductiveSensor);
     if (ISStatus == HIGH) {
       Delay(ClampDelay);
-      digitalWrite(S3Clamp, HIGH);
-      digitalWrite(S1SteamTube, HIGH);
+      ActivateSolenoids(S3Clamp, S1SteamTube);
       while (ResetSwitchStatus == LOW) {
         ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch,DO YOU THO? ITS IN A WHILE LOOP
       }
       ReleaseAndAirWipe();
       Delay(AirWipeActivationLength);
       digitalWrite(S2AirWipe, LOW);
-      while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears. - Doesn't seem necessary, just good practice. 
+      while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears. - Doesn't seem necessary, just good practice.
         ISStatus = digitalRead(InductiveSensor);
       }
     }
   }
-  
-  if (AutomaticStatus == HIGH) {  //FUNCTIONS OFF A TIME DELAY OR CO2 SENSOR SIGNAL 
+
+  if (AutomaticStatus == HIGH) {  //FUNCTIONS OFF A TIME DELAY OR CO2 SENSOR SIGNAL
+    ISStatus = digitalRead(InductiveSensor);
     if (ISStatus == HIGH) {
-      Delay(ClampDelay); 
-      digitalWrite(S3Clamp, HIGH);
-      digitalWrite(S1SteamTube, HIGH);
-      while (ResetSwitchStatus == LOW) {
+      Delay(ClampDelay);
+      ActivateSolenoids(S3Clamp, S1SteamTube);
+      PreviousMillis = millis();
+      while (AutomaticConditional(ResetSwitchStatus, AutomaticDelayLength, CO2SensorStatus)) {
         ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch, DO YOU THO? ITS IN A WHILE LOOP
+        CO2SensorStatus = digitalRead(CO2Sensor);
       }
       ReleaseAndAirWipe();
       Delay(AirWipeActivationLength);
@@ -105,14 +111,37 @@ void loop() {
   }
 }
 
-void ReleaseAndAirWipe(){
-    digitalWrite(S3Clamp, LOW);
-    digitalWrite(S1SteamTube, LOW);
-    digitalWrite(S2AirWipe, HIGH);
+void ReleaseAndAirWipe() {
+  digitalWrite(S3Clamp, LOW);
+  digitalWrite(S1SteamTube, LOW);
+  digitalWrite(S2AirWipe, HIGH);
 }
-void Delay(unsigned long DelayTime){
-      unsigned long PreviousMillis=millis();
-      while ((unsigned long)(millis() - PreviousMillis) < DelayTime) {
-        //Delay For passed through time
-      }
+void Delay(unsigned long DelayTime) {
+  unsigned long PreviousMillis = millis();
+  while ((unsigned long)(millis() - PreviousMillis) < DelayTime) {
+    //Delay For passed through time
+  }
 }
+
+void ActivateSolenoids(int Object1, int Object2) {
+  digitalWrite(Object1, HIGH);
+  digitalWrite(Object2, HIGH);
+}
+
+int AutomaticConditional(int Switch, int Delay, int Sensor) {
+  if (Switch == HIGH) {
+    return false;
+
+  }
+  else if ((unsigned long)(millis() - PreviousMillis) > Delay) {
+    return false;
+  }
+  else if (Sensor == HIGH) {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
+
+
