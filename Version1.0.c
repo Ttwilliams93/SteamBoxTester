@@ -77,40 +77,29 @@ void loop() {
   CO2SensorStatus = digitalRead(CO2Sensor);
   ISStatus = digitalRead(InductiveSensor);
 
+  Delay(ClampDelay);
+  ActivateSolenoids(S3Clamp, S1SteamTube);
+
   if (ManualStatus == HIGH && ISStatus == HIGH) {
-    Delay(ClampDelay);
-    ActivateSolenoids(S3Clamp, S1SteamTube);
-
     while (ResetSwitchStatus == LOW) {
-      ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch,DO YOU THO? ITS IN A WHILE LOOP
-    }
-
-    ReleaseAndAirWipe();
-    Delay(AirWipeActivationLength);
-    digitalWrite(S2AirWipe, LOW);
-
-    while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears. - Doesn't seem necessary, just good practice.
-      ISStatus = digitalRead(InductiveSensor);
+      ResetSwitchStatus = digitalRead(ResetSwitch); // Need to debounce this switch,DO YOU THO? ITS IN A WHILE LOOP
     }
   }
 
-  if (AutomaticStatus == HIGH && ISStatus == HIGH) {  //FUNCTIONS OFF A TIME DELAY OR CO2 SENSOR SIGNAL
-    Delay(ClampDelay);
-    ActivateSolenoids(S3Clamp, S1SteamTube);
+  if (AutomaticStatus == HIGH && ISStatus == HIGH) {
     PreviousMillis = millis();
-
     while (AutomaticConditional(ResetSwitchStatus, AutomaticDelayLength, CO2SensorStatus)) {
-      ResetSwitchStatus = digitalRead(ResetSwitch); //Need to debounce this switch, DO YOU THO? ITS IN A WHILE LOOP
+      ResetSwitchStatus = digitalRead(ResetSwitch); // Need to debounce this switch, DO YOU THO? ITS IN A WHILE LOOP
       CO2SensorStatus = digitalRead(CO2Sensor);
     }
+  }
 
-    ReleaseAndAirWipe();
-    Delay(AirWipeActivationLength);
-    digitalWrite(S2AirWipe, LOW);
+  ReleaseAndAirWipe();
+  Delay(AirWipeActivationLength);
+  digitalWrite(S2AirWipe, LOW);
 
-    while (ISStatus == HIGH) {   //Stop from returning to loop until inductive sensor clears.
-      ISStatus = digitalRead(InductiveSensor);
-    }
+  while (ISStatus == HIGH) {   // Stop from returning to loop until inductive sensor clears. - Doesn't seem necessary, just good practice.
+    ISStatus = digitalRead(InductiveSensor);
   }
 }
 
@@ -123,7 +112,7 @@ void ReleaseAndAirWipe() {
 void Delay(unsigned long DelayTime) {
   unsigned long PreviousMillis = millis();
   while ((unsigned long)(millis() - PreviousMillis) < DelayTime) {
-    //Delay For passed through time
+    // Delay For passed through time
   }
 }
 
